@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 
 def run():
 
@@ -18,7 +19,9 @@ def run():
                 # files = [file for file in [line.strip().split('\t') for line in lines]]
                 # files = [file for sublist in files for file in sublist]
                 filename = file.split('/').pop()
-                fields = filename.replace('.formatted', '').replace('.munged', '').replace('.gz', '').replace('.txt', '').split('.')
+                cleanname = re.sub('\.munged(.)*$', '', filename)
+                cleanname = re.sub('.formatted|.txt|.gz', '', cleanname)
+                fields = cleanname.split('.')
                 if (len(fields) != 10):
                     raise Exception('Unexpected filename in {}: {}'.format(args.in_files_loc, filename))
                 try:

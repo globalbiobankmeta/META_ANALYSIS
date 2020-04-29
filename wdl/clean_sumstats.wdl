@@ -53,7 +53,7 @@ task clean {
         cat chr.tmp >> ${outfile}.log
 
         echo "`date` plotting qq and manhattan" >> ${outfile}.log
-        qqplot.R --file ${outfile} --bp_col "POS" --chrcol "#CHR" --pval_col "p.value"
+        qqplot.R --file ${outfile} --bp_col "POS" --chrcol "#CHR" --pval_col "p.value" > ${outfile}.plot.log
 
         echo "`date` unique number of fields" >> ${outfile}.log
         gunzip -c ${outfile} | awk 'BEGIN{FS="\t"} {print NF}' | sort -u > n.tmp
@@ -69,6 +69,7 @@ task clean {
         File out = outfile
         File tbi = outfile + ".tbi"
         File log = outfile + ".log"
+        File plot_log = outfile + ".plot.log"
         Array[File] pngs = glob("*.png")
     }
 
