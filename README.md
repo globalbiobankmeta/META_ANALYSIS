@@ -10,6 +10,18 @@ This repository is used for COVID-19 Host Genetics Initiative GWAS meta-analysis
 
 2. The WDL workflow in [wdl/meta.wdl](wdl/meta.wdl), [wdl/meta.sub.wdl](wdl/meta.sub.wdl) and [wdl/meta.json](wdl/meta.json) is used to run meta-analysis with inverse-variance weighted betas. The analysis program is in [scripts/meta_analysis.py](scripts/meta_analysis.py). The output is a bgzipped, tab-delimited summary stat file with summary stats of each individual study and meta-analysis stats across all studies that have the variant. Leave-one-out meta-analysis can also be performed so that stats are available using all but one study in the meta-analysis. Manhattan and qq plots are also created.
 
+## Docker image
+
+A Docker image is available in [Docker Hub](https://hub.docker.com/repository/docker/covid19hg/meta)
+
+To build a Docker image:
+
+```
+git clone https://github.com/covid19-hg/META_ANALYSIS
+docker build -t covid19hg/meta:TAG_NAME -f META_ANALYSIS/docker/Dockerfile .
+```
+Replace TAG_NAME with the desired tag. The latest commit hash is used as tag name for versioning in Docker Hub.
+
 # General info
 
 ## Variant matching across studies
