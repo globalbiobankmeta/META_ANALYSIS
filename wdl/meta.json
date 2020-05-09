@@ -1,9 +1,9 @@
 {
     "meta_analysis.phenos": "gs://covid19-hg-analysis/20200426/ANA5.one.txt",
-    "meta_analysis.summary_files": "gs://covid19-hg-analysis/20200426/ANA5.one.files.txt",
-    "meta_analysis.conf_template": "gs://covid19-hg-analysis/20200426/conf/20200428_{PHENO}.json",
+    "meta_analysis.summary_files": "gs://covid19-hg-analysis/20200426/ANA5.one.dvhpart.files.txt",
+    "meta_analysis.conf_template": "gs://covid19-hg-analysis/20200426/conf/20200429_{PHENO}.json",
     "meta_analysis.run_meta.method": "inv_var",
-    "meta_analysis.run_meta.opts": "--is_het_test",
+    "meta_analysis.run_meta.opts": "--is_het_test --leave_one_out",
     "meta_analysis.run_meta.run_range.docker": "gcr.io/covid-19-hg/meta:2c79e",
     "meta_analysis.run_meta.gather.loglog_ylim": 10,
     "meta_analysis.run_meta.gather.p_thresh": 1e-5,
