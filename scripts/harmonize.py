@@ -149,7 +149,7 @@ def harmonize(file_in, file_ref):
         print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\tBETA\tSE\tp.value\tAF_gnomAD')
         for line in f:
             s = line.strip().split('\t')
-            var = VariantData(s[h_idx['CHR']].replace('chr', '').replace('X', '23'), s[h_idx['POS']],
+            var = VariantData(s[h_idx['#CHR']].replace('chr', '').replace('X', '23'), s[h_idx['POS']],
                               s[h_idx['Allele1']], s[h_idx['Allele2']],
                               s[h_idx['AF_Allele2']], s[h_idx['BETA']],
                               s[h_idx['SE']], s[h_idx['p.value']])
