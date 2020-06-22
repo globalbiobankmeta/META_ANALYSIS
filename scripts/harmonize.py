@@ -146,7 +146,7 @@ def harmonize(file_in, file_ref):
     
     with gzip.open(file_in, 'rt') as f:
         h_idx = {h:i for i,h in enumerate(f.readline().strip().split('\t'))}
-        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\tBETA\tSE\tp.value\tAF_gnomAD')
+        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\tBETA\tSE\tp.value\tAF_' + file_ref.replace('.gz', ''))
         for line in f:
             s = line.strip().split('\t')
             var = VariantData(s[h_idx['#CHR']].replace('chr', '').replace('X', '23'), s[h_idx['POS']],
