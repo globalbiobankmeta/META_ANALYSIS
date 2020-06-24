@@ -47,9 +47,9 @@ class Variant():
                   or (self.chr < other.chr)
                )
 
-    def is_equal(self, other:'VariantData') -> bool:
+    def is_equal(self, other:'Variant') -> bool:
         """
-            Checks if this VariantData is the same variant (possibly different strand or ordering of alleles)
+            Checks if this Variant is the same variant (possibly different strand or ordering of alleles)
             returns: true if the same false if not
         """
 
@@ -79,12 +79,13 @@ class Variant():
 
 class VariantData(Variant):
 
-    def __init__(self, chr, pos, ref, alt, af, beta, se, pval, extra_cols=[]):
+    def __init__(self, chr, pos, ref, alt, af, info, beta, se, pval, extra_cols=[]):
         self.chr = chr
         self.pos = int(float(pos))
         self.ref = ref.strip().upper()
         self.alt = alt.strip().upper()
         self.af = float(af)
+        self.info = float(info)
         self.beta = float(beta)
         self.se = float(se)
         self.pval = float(pval)
@@ -146,12 +147,12 @@ def harmonize(file_in, file_ref):
     
     with gzip.open(file_in, 'rt') as f:
         h_idx = {h:i for i,h in enumerate(f.readline().strip().split('\t'))}
-        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\tBETA\tSE\tp.value\tAF_' + file_ref.replace('.gz', ''))
+        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\timputationInfo\tBETA\tSE\tp.value\tAF_' + file_ref.replace('.gz', '') + '\tAF_fc')
         for line in f:
             s = line.strip().split('\t')
             var = VariantData(s[h_idx['#CHR']].replace('chr', '').replace('X', '23'), s[h_idx['POS']],
                               s[h_idx['Allele1']], s[h_idx['Allele2']],
-                              s[h_idx['AF_Allele2']], s[h_idx['BETA']],
+                              s[h_idx['AF_Allele2']], s[h_idx['imputationInfo']], s[h_idx['BETA']],
                               s[h_idx['SE']], s[h_idx['p.value']])
             ref_vars = []
             while ref_has_lines and int(ref_chr) < int(var.chr) or (int(ref_chr) == int(var.chr) and ref_pos < var.pos):
@@ -173,14 +174,21 @@ def harmonize(file_in, file_ref):
                     ref_has_lines = False
 
             gnomad_af = 'NA'
+            af_fc = 'NA'
             for r in ref_vars:
                 if var.equalize_to(r):
                     gnomad_af = r.af
+                    if r.af == 'NA':
+                        af_fc = 'NA'
+                    elif float(r.af) == 0:
+                        af_fc = 'Inf'
+                    else:
+                        af_fc = var.af / float(r.af)
                     break
 
             print('\t'.join([var.chr, str(var.pos), var.ref, var.alt,
-                             str(var.af), str(var.beta), str(var.se), str(var.pval),
-                             str(gnomad_af)]))
+                             str(var.af), str(var.info), str(var.beta), str(var.se), str(var.pval),
+                             str(gnomad_af), str(af_fc)]))
             
 def run():
     parser = argparse.ArgumentParser(description="Harmonize GWAS summary stats to reference")
@@ -188,6 +196,6 @@ def run():
     parser.add_argument('file_ref', action='store', type=str, help='Reference file')
     args = parser.parse_args()
     harmonize(args.file_in, args.file_ref)
-              
+    
 if __name__ == '__main__':
     run()
