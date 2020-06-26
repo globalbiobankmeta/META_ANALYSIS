@@ -181,7 +181,7 @@ def harmonize(file_in, file_ref):
                     if r.af == 'NA':
                         af_fc = 'NA'
                     elif float(r.af) == 0:
-                        af_fc = 'Inf'
+                        af_fc = 1000000
                     else:
                         af_fc = var.af / float(r.af)
                     break
