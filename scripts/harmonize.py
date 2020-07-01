@@ -88,7 +88,7 @@ class VariantData(Variant):
         self.ref = ref.strip().upper()
         self.alt = alt.strip().upper()
         self.af = float(af)
-        self.info = float(info)
+        self.info = float(info) if info != 'NA' else None
         self.beta = float(beta)
         self.se = float(se)
         self.pval = float(pval)
