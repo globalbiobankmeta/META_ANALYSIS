@@ -28,6 +28,9 @@ def flip_strand( allele):
 def is_symmetric(a1, a2):
     return (a1=="A" and a2=="T") or (a1=="T" and a2=="A") or (a1=="C" and a2=="G") or (a1=="G" and a2=="C")
 
+def format_num(num, precision=4):
+    return numpy.format_float_scientific(num, precision=precision) if num is not None else "NA"
+
 class Variant():
 
     def __init__(self, chr, pos, ref, alt, af):
@@ -35,7 +38,7 @@ class Variant():
         self.pos = int(float(pos))
         self.ref = ref.strip().upper()
         self.alt = alt.strip().upper()
-        self.af = af
+        self.af = float(af) if af != "NA" else None
 
     def __eq__(self, other):
 
@@ -137,6 +140,20 @@ class VariantData(Variant):
 
         return False
 
+def get_n(file_in):
+    f = re.sub('\.munged.*', '', file_in.split('/').pop())
+    fields = re.sub('.formatted|.txt|.gz|.bgz', '', f).split('.')
+    if (len(fields) != 10):
+        raise Exception('Unexpected number of fields: ' + str(len(fields)) + ': ' + file_in)
+    try:
+        freeze = int(fields[3])
+        n_cases = int(fields[6])
+        n_controls = int(fields[7])
+        date = int(fields[9])
+    except ValueError:
+        raise Exception('Could not parse freeze/case/control/date number from ' + file_in)
+    return n_cases + n_controls
+
 def harmonize(file_in, file_ref):
 
     fp_ref = gzip.open(file_ref, 'rt')
@@ -144,16 +161,19 @@ def harmonize(file_in, file_ref):
     ref_chr = 1
     ref_pos = 0
     ref_h_idx = {h:i for i,h in enumerate(fp_ref.readline().strip().split('\t'))}
-    
+
+    n_total = get_n(file_in)
     with gzip.open(file_in, 'rt') as f:
         h_idx = {h:i for i,h in enumerate(f.readline().strip().split('\t'))}
-        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\timputationInfo\tBETA\tSE\tp.value\tAF_' + file_ref.replace('.gz', '') + '\tAF_fc')
+        has_n = 'N' in h_idx
+        print('#CHR\tPOS\tAllele1\tAllele2\tAF_Allele2\timputationInfo\tBETA\tSE\tp.value\tAF_' + file_ref.replace('.gz', '') + '\tAF_fc\tN')
         for line in f:
             s = line.strip().split('\t')
             var = VariantData(s[h_idx['#CHR']].replace('chr', '').replace('X', '23'), s[h_idx['POS']],
                               s[h_idx['Allele1']], s[h_idx['Allele2']],
                               s[h_idx['AF_Allele2']], s[h_idx['imputationInfo']], s[h_idx['BETA']],
                               s[h_idx['SE']], s[h_idx['p.value']])
+            n = int(s[h_idx['N']]) if has_n else n_total
             ref_vars = []
             while ref_has_lines and int(ref_chr) < int(var.chr) or (int(ref_chr) == int(var.chr) and ref_pos < var.pos):
                 ref_line = fp_ref.readline().strip().split('\t')
@@ -173,13 +193,13 @@ def harmonize(file_in, file_ref):
                 except IndexError:
                     ref_has_lines = False
 
-            gnomad_af = 'NA'
-            af_fc = 'NA'
+            gnomad_af = None
+            af_fc = None
             for r in ref_vars:
                 if var.equalize_to(r):
                     gnomad_af = r.af
-                    if r.af == 'NA':
-                        af_fc = 'NA'
+                    if r.af == None:
+                        af_fc = None
                     elif float(r.af) == 0:
                         af_fc = 1000000
                     else:
@@ -187,8 +207,8 @@ def harmonize(file_in, file_ref):
                     break
 
             print('\t'.join([var.chr, str(var.pos), var.ref, var.alt,
-                             str(var.af), str(var.info), str(var.beta), str(var.se), str(var.pval),
-                             str(gnomad_af), str(af_fc)]))
+                             format_num(var.af, 3), format_num(var.info, 3), str(var.beta), str(var.se), str(var.pval),
+                             format_num(gnomad_af, 3), format_num(af_fc, 3), str(n)]))
             
 def run():
     parser = argparse.ArgumentParser(description="Harmonize GWAS summary stats to reference")
