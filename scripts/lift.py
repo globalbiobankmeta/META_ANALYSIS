@@ -41,6 +41,7 @@ joinsortargs = ["-v variant"]
 
 def get_dat_var(line, index):
     d = line[index].split(":")
+    d[0] = d[0].replace("23", "X").replace("24", "Y")
     if len(d)<4:
         print("WARNING: Not properly formatted variant id in line: " + line, file=sys.stderr )
         return None
@@ -75,7 +76,7 @@ with openf( args.file ,'rt') as res:
         ref = header.index(args.ref)
         alt = header.index(args.alt)
         joinsortargs = ["--chr",chr+1,"--pos",pos+1,"--ref", ref+1, "--alt", alt+1]
-        get_dat_func = lambda line:  (line[chr], line[pos], line[ref], line[alt])
+        get_dat_func = lambda line:  (line[chr].replace("23", "X").replace("24", "Y"), line[pos], line[ref], line[alt])
     else:
         var = header.index(args.var)
         joinsortargs = ["--var",var+1]
