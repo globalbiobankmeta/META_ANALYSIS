@@ -41,7 +41,6 @@ joinsortargs = ["-v variant"]
 
 def get_dat_var(line, index):
     d = line[index].split(":")
-    d[0] = d[0].replace("23", "X").replace("24", "Y")
     if len(d)<4:
         print("WARNING: Not properly formatted variant id in line: " + line, file=sys.stderr )
         return None
@@ -76,7 +75,7 @@ with openf( args.file ,'rt') as res:
         ref = header.index(args.ref)
         alt = header.index(args.alt)
         joinsortargs = ["--chr",chr+1,"--pos",pos+1,"--ref", ref+1, "--alt", alt+1]
-        get_dat_func = lambda line:  (line[chr].replace("23", "X").replace("24", "Y"), line[pos], line[ref], line[alt])
+        get_dat_func = lambda line:  (line[chr], line[pos], line[ref], line[alt])
     else:
         var = header.index(args.var)
         joinsortargs = ["--var",var+1]
@@ -95,7 +94,10 @@ with openf( args.file ,'rt') as res:
                 print("Not enough columns in " + line + ". Ignoring")
                 continue
             try:
-                bed.write( "{}\t{}\t{}\t{}".format(vardat[0] if vardat[0].startswith('chr') else "chr"+vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3]) ) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n" )
+                chr_write = vardat[0].replace('23', 'X').replace('24', 'Y')
+                if not chr_write.startswith('chr'):
+                    chr_write = "chr" + chr_write
+                bed.write( "{}\t{}\t{}\t{}".format(chr_write, str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3]) ) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n" )
             except ValueError:
                 print("Ignoring unexpected chromosome position: " + ":".join([vardat[0],vardat[1],vardat[2],vardat[3]]))
                 continue
