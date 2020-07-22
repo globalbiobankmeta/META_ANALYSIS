@@ -154,7 +154,7 @@ def get_n(file_in):
         raise Exception('Could not parse freeze/case/control/date number from ' + file_in)
     return n_cases + n_controls
 
-def harmonize(file_in, file_ref):
+def harmonize(file_in, file_ref, no_n_in_filename):
 
     fp_ref = gzip.open(file_ref, 'rt')
     ref_has_lines = True
@@ -162,7 +162,7 @@ def harmonize(file_in, file_ref):
     ref_pos = 0
     ref_h_idx = {h:i for i,h in enumerate(fp_ref.readline().strip().split('\t'))}
 
-    n_total = get_n(file_in)
+    n_total = 'NA' if no_n_in_filename else get_n(file_in)
     with gzip.open(file_in, 'rt') as f:
         h_idx = {h:i for i,h in enumerate(f.readline().strip().split('\t'))}
         has_n = 'N' in h_idx
@@ -214,8 +214,9 @@ def run():
     parser = argparse.ArgumentParser(description="Harmonize GWAS summary stats to reference")
     parser.add_argument('file_in', action='store', type=str, help='GWAS summary stats in SAIGE format')
     parser.add_argument('file_ref', action='store', type=str, help='Reference file')
+    parser.add_argument('--no_n_in_filename', action='store_true', help='If given, dont get N from filename')
     args = parser.parse_args()
-    harmonize(args.file_in, args.file_ref)
+    harmonize(args.file_in, args.file_ref, args.no_n_in_filename)
     
 if __name__ == '__main__':
     run()
