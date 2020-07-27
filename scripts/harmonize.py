@@ -33,12 +33,14 @@ def format_num(num, precision=4):
 
 class Variant():
 
-    def __init__(self, chr, pos, ref, alt, af):
+    def __init__(self, chr, pos, ref, alt, af, filt, an):
         self.chr = chr
         self.pos = int(float(pos))
         self.ref = ref.strip().upper()
         self.alt = alt.strip().upper()
         self.af = float(af) if af != "NA" else None
+        self.filt = filt
+        self.an = int(an)
 
     def __eq__(self, other):
 
@@ -140,29 +142,17 @@ class VariantData(Variant):
 
         return False
 
-def get_n(file_in):
-    f = re.sub('\.munged.*', '', file_in.split('/').pop())
-    fields = re.sub('.formatted|.txt|.gz|.bgz', '', f).split('.')
-    if (len(fields) != 10):
-        raise Exception('Unexpected number of fields: ' + str(len(fields)) + ': ' + file_in)
-    try:
-        freeze = int(fields[3])
-        n_cases = int(fields[6])
-        n_controls = int(fields[7])
-        date = int(fields[9])
-    except ValueError:
-        raise Exception('Could not parse freeze/case/control/date number from ' + file_in)
-    return n_cases + n_controls
+def harmonize(file_in, file_ref, n_total, require_gnomad, passing_only, gnomad_min_an):
 
-def harmonize(file_in, file_ref, no_n_in_filename):
-
+    if gnomad_min_an is None:
+        gnomad_min_an = -1
+    
     fp_ref = gzip.open(file_ref, 'rt')
     ref_has_lines = True
     ref_chr = 1
     ref_pos = 0
     ref_h_idx = {h:i for i,h in enumerate(fp_ref.readline().strip().split('\t'))}
 
-    n_total = 'NA' if no_n_in_filename else get_n(file_in)
     with gzip.open(file_in, 'rt') as f:
         h_idx = {h:i for i,h in enumerate(f.readline().strip().split('\t'))}
         has_n = 'N' in h_idx
@@ -185,7 +175,9 @@ def harmonize(file_in, file_ref, no_n_in_filename):
             while ref_has_lines and int(ref_chr) == int(var.chr) and ref_pos == var.pos:
                 ref_vars.append(Variant(ref_chr, ref_pos,
                                         ref_line[ref_h_idx['ref']], ref_line[ref_h_idx['alt']],
-                                        ref_line[ref_h_idx['af_alt']]))
+                                        ref_line[ref_h_idx['af_alt']],
+                                        ref_line[ref_h_idx['filter']],
+                                        ref_line[ref_h_idx['an']]))
                 ref_line = fp_ref.readline().strip().split('\t')
                 try:
                     ref_chr = ref_line[ref_h_idx['#chr']]
@@ -193,30 +185,44 @@ def harmonize(file_in, file_ref, no_n_in_filename):
                 except IndexError:
                     ref_has_lines = False
 
-            gnomad_af = None
-            af_fc = None
+            equal = []
+            fcs = []
             for r in ref_vars:
-                if var.equalize_to(r):
-                    gnomad_af = r.af
-                    if r.af == None:
-                        af_fc = None
-                    elif float(r.af) == 0:
-                        af_fc = 1000000
-                    else:
-                        af_fc = var.af / float(r.af)
-                    break
+                if var.equalize_to(r) and (not passing_only or r.filt == 'PASS') and r.an >= gnomad_min_an:
+                    fc = 1e9
+                    if r.af != None:
+                        fc = var.af/float(r.af) if float(r.af) != 0 else 1e6
+                    equal.append(r)
+                    fcs.append(fc)
 
-            print('\t'.join([var.chr, str(var.pos), var.ref, var.alt,
-                             format_num(var.af, 3), format_num(var.info, 3), str(var.beta), str(var.se), str(var.pval),
-                             format_num(gnomad_af, 3), format_num(af_fc, 3), str(n)]))
+            if len(equal) > 0:
+                best_fc = 1e9
+                for i,fc in enumerate(fcs):
+                    if abs(fc-1) < best_fc:
+                        best_fc = abs(fc-1)
+                        best_fc_idx = i
+                var.equalize_to(equal[best_fc_idx])
+                gnomad_af = equal[best_fc_idx].af
+                af_fc = fcs[best_fc_idx] if fcs[best_fc_idx] != 1e9 else None
+            else:
+                gnomad_af = None
+                af_fc = None
+
+            if not require_gnomad or len(equal) > 0:
+                print('\t'.join([var.chr, str(var.pos), var.ref, var.alt,
+                                 format_num(var.af, 3), format_num(var.info, 3), str(var.beta), str(var.se), str(var.pval),
+                                 format_num(gnomad_af, 3), format_num(af_fc, 3), str(n)]))
             
 def run():
     parser = argparse.ArgumentParser(description="Harmonize GWAS summary stats to reference")
     parser.add_argument('file_in', action='store', type=str, help='GWAS summary stats in SAIGE format')
     parser.add_argument('file_ref', action='store', type=str, help='Reference file')
-    parser.add_argument('--no_n_in_filename', action='store_true', help='If given, dont get N from filename')
+    parser.add_argument('n', action='store', type=int, help='Total sample size')
+    parser.add_argument('--require_gnomad', action='store_true', help='Filter out variants not in gnomAD')
+    parser.add_argument('--passing_only', action='store_true', help='Filter out non-passing variants in gnomAD')
+    parser.add_argument('--gnomad_min_an', type=int, action='store', help='Minimum AN in gnomAD')
     args = parser.parse_args()
-    harmonize(args.file_in, args.file_ref, args.no_n_in_filename)
+    harmonize(args.file_in, args.file_ref, args.n, args.require_gnomad, args.passing_only, args.gnomad_min_an)
     
 if __name__ == '__main__':
     run()
