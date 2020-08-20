@@ -94,7 +94,10 @@ with openf( args.file ,'rt') as res:
                 print("Not enough columns in " + line + ". Ignoring")
                 continue
             try:
-                bed.write( "{}\t{}\t{}\t{}".format(vardat[0] if vardat[0].startswith('chr') else "chr"+vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3]) ) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n" )
+                chr_write = vardat[0].replace('23', 'X').replace('24', 'Y')
+                if not chr_write.startswith('chr'):
+                    chr_write = "chr" + chr_write
+                bed.write( "{}\t{}\t{}\t{}".format(chr_write, str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3]) ) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n" )
             except ValueError:
                 print("Ignoring unexpected chromosome position: " + ":".join([vardat[0],vardat[1],vardat[2],vardat[3]]))
                 continue

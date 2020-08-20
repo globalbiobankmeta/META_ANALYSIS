@@ -487,7 +487,7 @@ def do_meta(study_list: List[ Tuple[Study, VariantData]], methods: List[str], is
     '''
     return [ SUPPORTED_METHODS[m](study_list, is_het_test) for m in methods ]
 
-def format_num(num, precision=2):
+def format_num(num, precision=4):
     return numpy.format_float_scientific(num, precision=precision) if num is not None else "NA"
 
 def get_next_variant( studies : List[Study]) -> List[VariantData]:
@@ -633,7 +633,7 @@ def run():
 
             for i,_ in enumerate(studs):
                 if next_var[i] is not None:
-                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval) ])
+                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval, 3) ])
                     outdat.extend([ c for c in next_var[i].extra_cols ])
 
                     # meta analyse pairwise only with the leftmost study
@@ -645,7 +645,7 @@ def run():
                         for m in met:
                             outdat.append(format_num(m[0]))
                             outdat.append(format_num(m[1]))
-                            outdat.append(format_num(m[2]))
+                            outdat.append(format_num(m[2], 3))
                     else:
                         outdat.extend(["NA"] * len(methods) * 3)
                 else:
@@ -655,9 +655,10 @@ def run():
             if len( matching_studies )>1:
                 met = do_meta( matching_studies, methods=methods, is_het_test=args.is_het_test )
                 for m in met:
-                    meta_res.extend([format_num(num) for num in m[0:4]])
+                    meta_res.extend([format_num(num) for num in m[0:2]])
+                    meta_res.extend([format_num(num, 3) for num in m[2:4]])
             else:
-                meta_res.extend( [format_num(matching_studies[0][1].beta), format_num(matching_studies[0][1].se) , format_num(matching_studies[0][1].pval), 'NA']  * len(methods) )
+                meta_res.extend( [format_num(matching_studies[0][1].beta), format_num(matching_studies[0][1].se) , format_num(matching_studies[0][1].pval, 3), 'NA']  * len(methods) )
 
             outdat.append( str(len(matching_studies)) )
             outdat.extend(meta_res)
@@ -669,9 +670,10 @@ def run():
                     if len(matching_studies_loo) > 1:
                         met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
                         for m in met:
-                            outdat.extend([format_num(num) for num in m[0:4]])
+                            outdat.extend([format_num(num) for num in m[0:2]])
+                            outdat.extend([format_num(num, 3) for num in m[2:4]])
                     elif len(matching_studies_loo) == 1:
-                        outdat.extend( [format_num(matching_studies_loo[0][1].beta), format_num(matching_studies_loo[0][1].se) , format_num(matching_studies_loo[0][1].pval), 'NA']  * len(methods) )
+                        outdat.extend( [format_num(matching_studies_loo[0][1].beta), format_num(matching_studies_loo[0][1].se) , format_num(matching_studies_loo[0][1].pval, 3), 'NA']  * len(methods) )
                     else:
                         outdat.extend(['NA'] * 4 * len(methods))
 
