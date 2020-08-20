@@ -1,11 +1,18 @@
 {
-    "meta_analysis.phenos": "gs://covid19-hg-analysis/20200426/ANA5.one.txt",
-    "meta_analysis.summary_files": "gs://covid19-hg-analysis/20200426/ANA5.one.dvhpart.files.txt",
-    "meta_analysis.conf_template": "gs://covid19-hg-analysis/20200426/conf/20200429_{PHENO}.json",
+    "meta_analysis.phenos": "gs://covid19-hg-analysis/20200619/conf/ANA.pheno.txt",
+    "meta_analysis.summary_files": "gs://covid19-hg-analysis/20200619/conf/x_fix/ANA.files.txt",
+    "meta_analysis.conf_template": "gs://covid19-hg-analysis/20200619/conf/x_fix/{PHENO}.json",
     "meta_analysis.run_meta.method": "inv_var",
-    "meta_analysis.run_meta.opts": "--is_het_test --leave_one_out",
-    "meta_analysis.run_meta.run_range.docker": "gcr.io/covid-19-hg/meta:2c79e",
-    "meta_analysis.run_meta.gather.loglog_ylim": 10,
-    "meta_analysis.run_meta.gather.p_thresh": 1e-5,
-    "meta_analysis.run_meta.gather.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2"
+    "meta_analysis.run_meta.opts": "--is_het_test",
+    "meta_analysis.run_meta.run_range.docker": "gcr.io/covid-19-hg/meta:f053b",
+    "meta_analysis.run_meta.gather.loglog_ylim": 20,
+    "meta_analysis.run_meta.gather.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
+    "meta_analysis.run_meta.add_rsids_af.docker": "gcr.io/covid-19-hg/meta:f053b",
+    "meta_analysis.run_meta.add_rsids_af.file_ref": "gs://covid19-hg-analysis/gnomad/v3/gnomad_v3_b38_ref_all.rsid.gz",
+    "meta_analysis.run_meta.add_rsids_af.p_thresh": 1e-5,
+    "meta_analysis.run_meta.filter_cols.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
+    "meta_analysis.run_meta.filter_cols.out_template": "COVID19_HGI_{PHENO}_20200805.txt.gz",
+    "meta_analysis.run_meta.filter_cols.p_thresh": 1e-5,
+    "meta_analysis.run_meta.lift.docker": "gcr.io/covid-19-hg/meta:f053b",
+    "meta_analysis.run_meta.lift.p_thresh": 1e-5
 }
