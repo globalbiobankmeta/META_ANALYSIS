@@ -1,0 +1,16 @@
+{
+    "munge_sumstats.sumstats_loc": "gs://covid19-hg-analysis/20200619/conf/20200805_upload_loc_pop_n.txt",
+    "munge_sumstats.gnomad_ref_template": "gs://covid19-hg-analysis/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
+    "munge_sumstats.clean_filter.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
+    "munge_sumstats.clean_filter.af_col": "AF_Allele2",
+    "munge_sumstats.clean_filter.min_af": 0.0001,
+    "munge_sumstats.clean_filter.info_col": "imputationInfo",
+    "munge_sumstats.clean_filter.min_info": 0.6,
+    "munge_sumstats.lift.docker": "gcr.io/covid-19-hg/meta:4bd48",
+    "munge_sumstats.lift.b37_ref": "gs://covid19-hg-analysis/recomb_map/37/plink.chr21.GRCh37.map.txt",
+    "munge_sumstats.lift.b38_ref": "gs://covid19-hg-analysis/recomb_map/38/plink.chr21.GRCh38.map.txt",
+    "munge_sumstats.harmonize.options": "",
+    "munge_sumstats.harmonize.docker": "gcr.io/covid-19-hg/meta:f053b",
+    "munge_sumstats.plot.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
+    "munge_sumstats.plot.loglog_ylim": 20
+}

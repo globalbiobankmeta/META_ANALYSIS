@@ -1,0 +1,6 @@
+{
+    "qq_manha.stats": "gs://covid19-hg-analysis/20200426/results/COVID19_HGI_ANA5_LEAVE_20200428.txt.gz",
+    "qq_manha.colfile": "gs://covid19-hg-analysis/20200426/COVID19_HGI_ANA5_LEAVE_20200428_pcols.txt",
+    "qq_manha.plot.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
+    "qq_manha.plot.loglog_ylim": 10
+}
