@@ -1,5 +1,5 @@
 {
-    "munge_sumstats.sumstats_loc": "gs://gbmi-analysis/08202020/conf/upload_loc_pop_09062020.txt_refined_new_MGB",
+    "munge_sumstats.sumstats_loc": "gs://gbmi-analysis/08202020/conf/upload_loc_pop_09062020.txt_refined_Estonian",
     "munge_sumstats.gnomad_ref_template": "gs://gbmi-analysis/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
     "munge_sumstats.clean_filter.docker": "gcr.io/global-biobank-meta-analysis/saige:0.39.3",
     "munge_sumstats.clean_filter.af_col": "AF_Allele2",
@@ -14,6 +14,4 @@
     "munge_sumstats.harmonize.options": "",
     "munge_sumstats.harmonize.docker": "gcr.io/global-biobank-meta-analysis/meta:4bd49",
     "munge_sumstats.plot.docker": "gcr.io/global-biobank-meta-analysis/plotv2:0.3", 
-    "munge_sumstats.filterbyfc_comparetoLOCObbk_qc.docker": "gcr.io/global-biobank-meta-analysis/meta:4bd49", 
-    "munge_sumstats.plot2.docker": "gcr.io/global-biobank-meta-analysis/plotv2:0.3", 
 }

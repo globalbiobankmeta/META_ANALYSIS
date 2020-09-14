@@ -12,7 +12,7 @@ task run_range {
 
     command <<<
 
-        echo "`date` COVID-19 HGI meta-analysis - run meta"
+        echo "`date` Biobank meta-analysis - run meta"
         echo "docker: ${docker}"
         echo "pheno: ${pheno}"
         echo "method: ${method}"
@@ -36,9 +36,9 @@ task run_range {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-f"
         preemptible: 0
-        noAddress: true
+        noAddress: false
     }
 }
 
@@ -58,7 +58,7 @@ task gather {
 
     command <<<
 
-        echo "`date` COVID-19 HGI meta-analysis - gather results"
+        echo "`date` Biobank HGI meta-analysis - gather results"
         echo "docker: ${docker}"
         echo "pheno: ${pheno}"
         echo "method: ${method}"
@@ -78,21 +78,12 @@ task gather {
               done) \
         | bgzip > ${pheno}_${method}_meta.gz
 
-        echo "`date` plotting qq and manhattan"
-        gunzip -c ${pheno}_${method}_meta.gz | awk '
-        BEGIN {FS=OFS="\t"}
-        NR==1 {for(i=1;i<=NF;i++) a[$i]=i;}
-        {print $a["#CHR"],$a["POS"],$a["all_${method}_meta_p"]}
-        ' > ${pheno}_${method}_meta_p
-        qqplot.R --file ${pheno}_${method}_meta_p --bp_col "POS" --chrcol "#CHR" --pval_col "all_${method}_meta_p" --loglog_ylim ${loglog_ylim}
 
         echo "`date` done"
-
     >>>
 
     output {
         File out = pheno + "_" + method + "_meta.gz"
-        Array[File] pngs = glob("*.png")
     }
 
     runtime {
@@ -100,9 +91,9 @@ task gather {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-central1-f"
         preemptible: 0
-        noAddress: true
+        noAddress: false
     }
 }
 
@@ -181,6 +172,8 @@ task add_rsids_af {
                 print(line + '\t' + str(n_sum) + '\t' + numpy.format_float_scientific(af_total, precision=3) + '\t' + rsid)
         EOF
 
+
+
         echo "`date` filtering p-value ${p_thresh}"
         gunzip -c ${base}.gz | awk '
         NR==1 {for (i=1;i<=NF;i++) a[$i]=i; print $0}
@@ -204,9 +197,9 @@ task add_rsids_af {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-central1-f"
         preemptible: 0
-        noAddress: true
+        noAddress: false
     }
 }
 
@@ -222,7 +215,7 @@ task filter_cols {
 
     command <<<
 
-        echo "`date` COVID-19 HGI meta-analysis - filter columns"
+        echo "`date` Biobank meta-analysis - filter columns"
         echo "docker: ${docker}"
         echo "file: ${file}"
         echo "pheno: ${pheno}"
@@ -259,9 +252,9 @@ task filter_cols {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-central1-f"
         preemptible: 0
-        noAddress: true
+        noAddress: false
     }
 }
 
@@ -275,7 +268,7 @@ task lift {
 
     command <<<
 
-        echo "`date` COVID-19 HGI meta-analysis - liftover to 37"
+        echo "`date` Biobank meta-analysis - liftover to 37"
         echo "docker: ${docker}"
         echo "file: ${file}"
         echo "method: ${method}"
@@ -314,6 +307,14 @@ task lift {
         NR>1 && $a["all_${method}_meta_p"] < ${p_thresh}
         ' > ${base}.b37_${p_thresh}.txt
 
+        #echo "`date` plotting qq and manhattan"
+        gunzip -c ${base}.b37.txt.gz | awk '
+        BEGIN {FS=OFS="\t"}
+        NR==1 {for(i=1;i<=NF;i++) a[$i]=i;}
+        {print $a["#CHR"],$a["POS"],$a["all_${method}_meta_p"],$a["all_meta_AF"],$a["REF"],$a["ALT"]}
+        ' > ${base}.b37_meta_p_forplot.txt
+
+
         echo "`date` done"
 
     >>>
@@ -324,6 +325,7 @@ task lift {
         File out = base + ".b37.txt.gz"
         File out_tbi = base + ".b37.txt.gz.tbi"
         File sign = base + ".b37_" + p_thresh + ".txt"
+        File out_plot = base + ".b37_meta_p_forplot.txt"
     }
 
     runtime {
@@ -331,11 +333,97 @@ task lift {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-central1-f"
         preemptible: 0
-        noAddress: true
+        noAddress: false
     }
 }
+
+task plot {
+
+    String docker
+    File file
+    String base = basename(file)
+    String method
+
+    command <<<
+
+        mv ${file} ${base}
+
+        head -n 1 ${base} > ${base}.temp
+
+        sort -k1,1g -k2,2g <(tail -n +2 ${base}) >> ${base}.temp
+
+        mv ${base}.temp ${base}	
+
+        echo "`date` Manhattan plot start"
+        /plot_scripts/ManhattanPlot.r --input=${base}  --PVAL="all_${method}_meta_p" --knownRegionFlank=1000000 --prefix="${base}_${method}_meta"  --ismanhattanplot=TRUE --isannovar=FALSE --isqqplot=FALSE --CHR="#CHR" --POS="POS" --ALLELE1=REF --ALLELE2=ALT
+
+        echo "`date` QQ plot start"
+        /plot_scripts/QQplot.r --input=${base}  --prefix="${base}_${method}_meta" --af=all_meta_AF --pvalue=all_${method}_meta_p
+        echo "`date` QQ plot done"
+
+    >>>
+
+
+   output {
+        File out1 = base + "_" + method + "_meta.regions.txt"
+        File out2 = base + "_" + method + "_meta.tophits.txt"
+        Array[File] pngs = glob("*.png")
+    }
+
+    runtime {
+        docker: "${docker}"
+        cpu: "1"
+        memory: "20 GB"
+        disks: "local-disk 200 SSD"
+        zones: "us-central1-f"
+        preemptible: 0
+        noAddress: false
+    }
+}
+
+
+task annovar {
+
+    String docker
+    File file_tophit
+    File file_meta
+    String base = basename(file_tophit)
+    String base_meta = basename(file_meta)
+
+    command <<<
+
+        mv ${file} ${base}
+        mv ${file_meta} ${base_meta}
+
+        echo "`date` annovar start"
+        perl /annovar/table_annovar.pl ${base} /annovar/humandb -buildver hg38 -out ${base}_annovar -remove -protocol refGene -operation gx -nastring NA -polish
+
+        zcat ${base_meta} | head -n 1 > ${base}_meta.txt
+        zgrep <(awk '{print $1"\t"$2"\t"$4"\t"$5}' ${base})  ${base_meta} >> ${base}_meta.txt
+
+        Rscript /annovar/mergeAnnovar.r --input_anno=${base}_annovar.hg38_multianno.txt --input_meta=${base}_meta.txt --outfile=${base}_meta_annovar.txt
+
+    >>>
+
+
+   output {
+        File out = base + "_meta_annovar.txt"
+    }
+
+    runtime {
+        docker: "${docker}"
+        cpu: "1"
+        memory: "20 GB"
+        disks: "local-disk 200 SSD"
+        zones: "us-central1-f"
+        preemptible: 0
+        noAddress: false
+    }
+}
+
+
 
 workflow run_meta {
 
@@ -366,5 +454,13 @@ workflow run_meta {
 
     call lift {
         input: file=filter_cols.out, method=method
+    }
+
+    call plot {
+        input: file=lift.out_plot, method=method
+    }
+
+    call annovar {
+        input: file_tophit=plot.out2, file_meta=lift.out
     }
 }

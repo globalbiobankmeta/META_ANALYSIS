@@ -394,15 +394,7 @@ workflow munge_sumstats {
             input: sumstat_file=lift.out, gnomad_ref=sub(gnomad_ref_template, "POP", sumstat_file[1]), n=sumstat_file[2]
         }
         call plot {
-            #input: sumstat_file=harmonize.out, pop=sumstat_file[1]
-        }
-
-	call filterbyfc_comparetoLOCObbk_qc {
-            input: sumstat_file=harmonize.out, rmlistfile=sumstat_file[4], amlistfile=sumstat_file[5]
-        }
-
-        call plot2 {
-            input: sumstat_file=filterbyfc_comparetoLOCObbk_qc.out, pop=sumstat_file[1]
+            input: sumstat_file=harmonize.out, pop=sumstat_file[1]
         }
 
     }
