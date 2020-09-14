@@ -350,11 +350,11 @@ task plot {
 
         mv ${file} ${base}
 
-        head -n 1 ${base} > ${base}.temp
+        #head -n 1 ${base} > ${base}.temp
 
-        sort -k1,1g -k2,2g <(tail -n +2 ${base}) >> ${base}.temp
+        #sort -k1,1g -k2,2g <(tail -n +2 ${base}) >> ${base}.temp
 
-        mv ${base}.temp ${base}	
+        #mv ${base}.temp ${base}	
 
         echo "`date` Manhattan plot start"
         /plot_scripts/ManhattanPlot.r --input=${base}  --PVAL="all_${method}_meta_p" --knownRegionFlank=1000000 --prefix="${base}_${method}_meta"  --ismanhattanplot=TRUE --isannovar=FALSE --isqqplot=FALSE --CHR="#CHR" --POS="POS" --ALLELE1=REF --ALLELE2=ALT
@@ -457,7 +457,7 @@ workflow run_meta {
     }
 
     call plot {
-        input: file=lift.out_plot, method=method
+        input: file=add_rsid_af.out, method=method
     }
 
     call annovar {
